@@ -444,62 +444,66 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
     }
 
 
-    /**
-     * Item clicked in Toolbar menu callback method
-     * @param menuItem Item clicked
-     * @return true if click detected and logic finished, false otherwise
-     */
-    @Override
-    public boolean onMenuItemClick(MenuItem menuItem) {
-        int id = menuItem.getItemId();
+        /**
+         * Item clicked in Toolbar menu callback method
+         * @param menuItem Item clicked
+         * @return true if click detected and logic finished, false otherwise
+         */
+        @Override
+        public boolean onMenuItemClick(MenuItem menuItem) {
+            int action = menuItem.getItemId();
 
-        // 'Backup notes' pressed -> show backupCheckDialog
-        if (id == R.id.action_backup) {
-            backupCheckDialog.show();
-            return true;
+            switch (action){
+
+                // 'Backup notes' pressed -> show backupCheckDialog
+                case R.id.action_backup:
+                    backupCheckDialog.show();
+                    return true;
+
+                // 'Restore notes' pressed -> show restoreCheckDialog
+                case R.id.action_restore:
+                    restoreCheckDialog.show();
+                    return true;
+
+                // 'Rate app' pressed -> create new dialog to ask the user if he wants to go to the PlayStore
+                // If yes -> start PlayStore and go to app link < If Exception thrown, open in Browser >
+                case R.id.action_rate_app:
+                    final String appPackageName = getPackageName();
+                    new AlertDialog.Builder(this)
+                            .setTitle(R.string.dialog_rate_title)
+                            .setMessage(R.string.dialog_rate_message)
+                            .setPositiveButton(R.string.yes_button, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    try {
+                                        startActivity(new Intent(Intent.ACTION_VIEW,
+                                                Uri.parse("market://details?id=" + appPackageName)));
+
+                                    } catch (android.content.ActivityNotFoundException anfe) {
+                                        startActivity(new Intent(Intent.ACTION_VIEW,
+                                                Uri.parse("http://play.google.com/store/apps/details?id="
+                                                        + appPackageName)));
+                                    }
+                                }
+                            })
+                            .setNegativeButton(R.string.no_button, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            })
+                            .show();
+
+                    return true;
+
+                //Creating about dialog.
+                case R.id.action_about:
+
+                    return true;
+                default:
+                    return false;
+            }
         }
-
-        // 'Restore notes' pressed -> show restoreCheckDialog
-        if (id == R.id.action_restore) {
-            restoreCheckDialog.show();
-            return true;
-        }
-
-        // 'Rate app' pressed -> create new dialog to ask the user if he wants to go to the PlayStore
-        // If yes -> start PlayStore and go to app link < If Exception thrown, open in Browser >
-        if (id == R.id.action_rate_app) {
-            final String appPackageName = getPackageName();
-
-            new AlertDialog.Builder(this)
-                    .setTitle(R.string.dialog_rate_title)
-                    .setMessage(R.string.dialog_rate_message)
-                    .setPositiveButton(R.string.yes_button, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            try {
-                                startActivity(new Intent(Intent.ACTION_VIEW,
-                                        Uri.parse("market://details?id=" + appPackageName)));
-
-                            } catch (android.content.ActivityNotFoundException anfe) {
-                                startActivity(new Intent(Intent.ACTION_VIEW,
-                                        Uri.parse("http://play.google.com/store/apps/details?id="
-                                                + appPackageName)));
-                            }
-                        }
-                    })
-                    .setNegativeButton(R.string.no_button, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
-                        }
-                    })
-                    .show();
-
-            return true;
-        }
-
-        return false;
-    }
 
 
     /**
