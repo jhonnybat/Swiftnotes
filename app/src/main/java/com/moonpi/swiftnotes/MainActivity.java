@@ -6,7 +6,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -25,6 +24,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.moonpi.swiftnotes.Utils.DialogHelper;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -32,7 +33,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.util.ArrayList;
 
-import static com.moonpi.swiftnotes.DataUtils.*;
+import static com.moonpi.swiftnotes.Utils.DataUtils.*;
 
 
 public class MainActivity extends ActionBarActivity implements AdapterView.OnItemClickListener,
@@ -62,7 +63,7 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
     private int lastFirstVisibleItem = -1; // Last first item seen in list view scroll changed
     private float newNoteButtonBaseYCoordinate; // Base Y coordinate of newNote button
 
-    private AlertDialog backupCheckDialog, backupOKDialog, restoreCheckDialog, restoreFailedDialog;
+    private AlertDialog restoreCheckDialog;
 
 
     @Override
@@ -237,65 +238,6 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
      */
     protected void initDialogs(Context context) {
         /*
-         * Backup check dialog
-         *  If not sure -> dismiss
-         *  If yes -> check if notes length > 0
-         *    If yes -> save current notes to backup file in backupPath
-         */
-        backupCheckDialog = new AlertDialog.Builder(context)
-                .setTitle(R.string.action_backup)
-                .setMessage(R.string.dialog_check_backup_if_sure)
-                .setPositiveButton(R.string.yes_button, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // If note array not empty -> continue
-                        if (notes.length() > 0) {
-                            boolean backupSuccessful = saveData(backupPath, notes);
-
-                            if (backupSuccessful)
-                                showBackupSuccessfulDialog();
-
-                            else {
-                                Toast toast = Toast.makeText(getApplicationContext(),
-                                        getResources().getString(R.string.toast_backup_failed),
-                                        Toast.LENGTH_SHORT);
-                                toast.show();
-                            }
-                        }
-
-                        // If notes array is empty -> toast backup no notes found
-                        else {
-                            Toast toast = Toast.makeText(getApplicationContext(),
-                                    getResources().getString(R.string.toast_backup_no_notes),
-                                    Toast.LENGTH_SHORT);
-                            toast.show();
-                        }
-                    }
-                })
-                .setNegativeButton(R.string.no_button, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                })
-                .create();
-
-
-        // Dialog to display backup was successfully created in backupPath
-        backupOKDialog = new AlertDialog.Builder(context)
-                .setTitle(R.string.dialog_backup_created_title)
-                .setMessage(getString(R.string.dialog_backup_created) + " "
-                        + backupPath.getAbsolutePath())
-                .setNeutralButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                })
-                .create();
-
-
-        /*
          * Restore check dialog
          *  If not sure -> dismiss
          *  If yes -> check if backup notes exists
@@ -343,8 +285,9 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
                         }
 
                         // If backup file doesn't exist -> show restore failed dialog
-                        else
-                            showRestoreFailedDialog();
+                        else{
+                            DialogHelper.showFailDialog(MainActivity.this).show();
+                        }
                     }
                 })
                 .setNegativeButton(R.string.no_button, new DialogInterface.OnClickListener() {
@@ -354,33 +297,7 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
                     }
                 })
                 .create();
-
-
-        // Dialog to display restore failed when no backup file found
-        restoreFailedDialog = new AlertDialog.Builder(context)
-                .setTitle(R.string.dialog_restore_failed_title)
-                .setMessage(R.string.dialog_restore_failed)
-                .setNeutralButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                })
-                .create();
     }
-
-    // Method to dismiss backup check and show backup successful dialog
-    protected void showBackupSuccessfulDialog() {
-        backupCheckDialog.dismiss();
-        backupOKDialog.show();
-    }
-
-    // Method to dismiss restore check and show restore failed dialog
-    protected void showRestoreFailedDialog() {
-        restoreCheckDialog.dismiss();
-        restoreFailedDialog.show();
-    }
-
 
     /**
      * If item clicked in list view -> Start EditActivity intent with position as requestCode
@@ -457,7 +374,7 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
 
                 // 'Backup notes' pressed -> show backupCheckDialog
                 case R.id.action_backup:
-                    backupCheckDialog.show();
+                    DialogHelper.showBackUpDialog(MainActivity.this,notes).show();
                     return true;
 
                 // 'Restore notes' pressed -> show restoreCheckDialog
@@ -468,32 +385,7 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
                 // 'Rate app' pressed -> create new dialog to ask the user if he wants to go to the PlayStore
                 // If yes -> start PlayStore and go to app link < If Exception thrown, open in Browser >
                 case R.id.action_rate_app:
-                    final String appPackageName = getPackageName();
-                    new AlertDialog.Builder(this)
-                            .setTitle(R.string.dialog_rate_title)
-                            .setMessage(R.string.dialog_rate_message)
-                            .setPositiveButton(R.string.yes_button, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    try {
-                                        startActivity(new Intent(Intent.ACTION_VIEW,
-                                                Uri.parse("market://details?id=" + appPackageName)));
-
-                                    } catch (android.content.ActivityNotFoundException anfe) {
-                                        startActivity(new Intent(Intent.ACTION_VIEW,
-                                                Uri.parse("http://play.google.com/store/apps/details?id="
-                                                        + appPackageName)));
-                                    }
-                                }
-                            })
-                            .setNegativeButton(R.string.no_button, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.dismiss();
-                                }
-                            })
-                            .show();
-
+                    DialogHelper.createRateAppDialog(MainActivity.this,getPackageName()).show();
                     return true;
 
                 //Creating about dialog.
@@ -964,17 +856,8 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
      */
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
-        if (backupCheckDialog != null && backupCheckDialog.isShowing())
-            backupCheckDialog.dismiss();
-
-        if (backupOKDialog != null && backupOKDialog.isShowing())
-            backupOKDialog.dismiss();
-
         if (restoreCheckDialog != null && restoreCheckDialog.isShowing())
             restoreCheckDialog.dismiss();
-
-        if (restoreFailedDialog != null && restoreFailedDialog.isShowing())
-            restoreFailedDialog.dismiss();
 
         super.onConfigurationChanged(newConfig);
     }

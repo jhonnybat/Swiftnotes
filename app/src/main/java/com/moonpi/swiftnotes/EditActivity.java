@@ -25,7 +25,7 @@ import android.widget.Toast;
 import com.moonpi.swiftnotes.ColorPicker.ColorPickerDialog;
 
 import static com.moonpi.swiftnotes.ColorPicker.ColorPickerSwatch.*;
-import static com.moonpi.swiftnotes.DataUtils.*;
+import static com.moonpi.swiftnotes.Utils.DataUtils.*;
 
 
 public class EditActivity extends ActionBarActivity implements Toolbar.OnMenuItemClickListener {

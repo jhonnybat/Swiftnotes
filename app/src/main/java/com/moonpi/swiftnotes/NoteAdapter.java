@@ -18,7 +18,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import static com.moonpi.swiftnotes.DataUtils.*;
+import static com.moonpi.swiftnotes.Utils.DataUtils.*;
 import static com.moonpi.swiftnotes.MainActivity.*;
 
 
